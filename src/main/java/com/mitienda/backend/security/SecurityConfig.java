@@ -45,6 +45,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
+                        // 🔥 PRODUCTOS - VISIBLES SIN TOKEN
+                        .requestMatchers("/api/v1/products/**").permitAll()
+
                         // TODO LO DEMÁS → TOKEN OBLIGATORIO
                         .anyRequest().authenticated()
                 );

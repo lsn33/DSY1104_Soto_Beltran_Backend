@@ -1,31 +1,26 @@
 package com.mitienda.backend.security.jwt;
 
-import com.mitienda.backend.repository.UserRepository;
-import com.mitienda.backend.entity.User;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepo;
 
-    public JwtFilter(JwtUtil jwtUtil, UserRepository userRepo) {
+    public JwtFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
-        this.userRepo = userRepo;
     }
 
     @Override
@@ -41,22 +36,26 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
 
             if (jwtUtil.validateToken(token)) {
-                
+
                 String email = jwtUtil.getEmailFromToken(token);
                 String rol = jwtUtil.getRolFromToken(token);
 
-                User user = userRepo.findByEmail(email).orElse(null);
+                // 🔥 IMPORTANTE: Spring requiere ROLE_XXXX
+                SimpleGrantedAuthority authority =
+                        new SimpleGrantedAuthority("ROLE_" + rol);
 
-                if (user != null) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    user,
-                                    null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_" + rol.toUpperCase()))
-                            );
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                null,
+                                Collections.singletonList(authority)
+                        );
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 

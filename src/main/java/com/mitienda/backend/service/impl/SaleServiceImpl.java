@@ -41,15 +41,12 @@ public class SaleServiceImpl implements SaleService {
                 throw new RuntimeException("Stock insuficiente para: " + product.getNombre());
             }
 
-            // Precio total del producto
             double subtotal = product.getPrecio() * itemReq.getCantidad();
             total += subtotal;
 
-            // Descontar stock
             product.setStock(product.getStock() - itemReq.getCantidad());
             productRepo.save(product);
 
-            // Crear SaleItem
             SaleItem saleItem = new SaleItem();
             saleItem.setProductId(product.getId());
             saleItem.setCantidad(itemReq.getCantidad());
@@ -67,16 +64,20 @@ public class SaleServiceImpl implements SaleService {
         sale.setTotal(total);
         sale.setIva(iva);
         sale.setFecha(LocalDateTime.now());
-
-        // Estado simulado (por ahora siempre aprobado)
         sale.setEstado("APROBADO");
 
-        // 4) Asignar relación bidireccional
+        // 4) Relación bidireccional
         for (SaleItem si : saleItems) {
             si.setSale(sale);
         }
 
-        // 5) Guardar venta en BD
+        // 5) Guardar en BD
         return saleRepo.save(sale);
+    }
+
+    // 🔥 NUEVO: obtener todas las ventas para el panel de ADMIN
+    @Override
+    public List<Sale> getAllSales() {
+        return saleRepo.findAll();
     }
 }

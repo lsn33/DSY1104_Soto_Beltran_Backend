@@ -15,33 +15,39 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
-    @Bean
+@Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
     http.csrf(csrf -> csrf.disable())
         .cors(cors -> {})
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+                // 🔓 PÚBLICOS
+                .requestMatchers("/api/v1/auth/login").permitAll()
+                .requestMatchers("/api/v1/auth/register").permitAll()
+                .requestMatchers("/api/v1/transbank/**").permitAll()
 
-            // ENDPOINTS PÚBLICOS
-            .requestMatchers(
-                "/api/v1/auth/login",
-                "/api/v1/auth/register",
-                "/swagger-ui.html",
-                "/swagger-ui/**",
-                "/v3/api-docs",
-                "/v3/api-docs/**",
-                "/api/v1/transbank/**"
-            ).permitAll()
+                // 🔓 PRODUCTOS — PÚBLICOS
+                .requestMatchers("/api/v1/products").permitAll()
+                .requestMatchers("/api/v1/products/**").permitAll()
 
-            // TODO LO DEMÁS PROTEGIDO
-            .anyRequest().authenticated()
+                // 🔓 CATEGORÍAS — PÚBLICAS
+                .requestMatchers("/api/v1/categories").permitAll()
+                .requestMatchers("/api/v1/categories/**").permitAll()
+
+                // 🔒 ÓRDENES — SOLO ADMIN
+                .requestMatchers("/api/v1/sales").hasRole("ADMIN")
+                .requestMatchers("/api/v1/sales/**").hasRole("ADMIN")
+
+                // 🔒 TODO LO DEMÁS — REQUIERE TOKEN
+                .anyRequest().authenticated()
         );
 
     http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
 }
+
 
 }
 

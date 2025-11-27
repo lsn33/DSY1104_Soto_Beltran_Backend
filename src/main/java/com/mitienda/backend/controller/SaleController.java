@@ -20,15 +20,22 @@ public class SaleController {
         this.service = service;
     }
 
+    // 🔹 Crear venta
     @PostMapping
-public ResponseEntity<?> createSale(@RequestBody SaleRequest request) {
-    Sale sale = service.createSale(request);
+    public ResponseEntity<?> createSale(@RequestBody SaleRequest request) {
+        Sale sale = service.createSale(request);
 
-    return ResponseEntity.ok(Map.of(
-        "id", sale.getId(),
-        "total", sale.getTotal(),
-        "message", "Venta creada"
-    ));
-}
+        return ResponseEntity.ok(Map.of(
+                "id", sale.getId(),
+                "total", sale.getTotal(),
+                "estado", sale.getEstado(),
+                "fecha", sale.getFecha()
+        ));
+    }
 
+    // 🔹 Obtener TODAS las ventas (ADMIN)
+    @GetMapping
+    public ResponseEntity<?> getAllSales() {
+        return ResponseEntity.ok(service.getAllSales());
+    }
 }

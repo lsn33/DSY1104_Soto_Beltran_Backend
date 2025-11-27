@@ -17,4 +17,6 @@ public class Product {
     private Double precio;
     private Integer stock;
     private String categoria;
+    @Column(name = "url_imagen")
+    private String urlImagen;
 }

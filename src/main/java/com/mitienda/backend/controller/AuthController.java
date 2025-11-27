@@ -36,17 +36,23 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginRequest req) {
+public AuthResponse login(@RequestBody LoginRequest req) {
 
-        User user = userRepo.findByEmail(req.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    User user = userRepo.findByEmail(req.getEmail())
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        if (!encoder.matches(req.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Contraseña incorrecta");
-        }
-
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRol());
-
-        return new AuthResponse(token, user.getEmail(), user.getRol());
+    if (!encoder.matches(req.getPassword(), user.getPassword())) {
+        throw new RuntimeException("Contraseña incorrecta");
     }
+
+    String token = jwtUtil.generateToken(user.getEmail(), user.getRol());
+
+    return new AuthResponse(
+            token,
+            user.getEmail(),
+            user.getRol(),
+            user.getId()   // ⬅️ ESTO FALTABA
+    );
+}
+
 }

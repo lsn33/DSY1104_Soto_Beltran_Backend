@@ -1,10 +1,9 @@
 package com.mitienda.backend.security;
 
 import com.mitienda.backend.security.jwt.JwtFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -13,45 +12,29 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
-    private final JwtFilter jwtFilter;
-
-    public SecurityConfig(JwtFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
-    }
+    @Autowired
+    private JwtFilter jwtFilter;
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
     http.csrf(csrf -> csrf.disable())
-        .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .cors(cors -> {})
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
 
-            // LOGIN / REGISTER
-            .requestMatchers("/api/v1/auth/**").permitAll()
-
-            // TRANSBANK
-            .requestMatchers("/api/v1/transbank/**").permitAll()
-
-            // PRODUCTOS (públicos)
-            .requestMatchers("/api/v1/products/**").permitAll()
-
-            // 🔥🔥🔥 AGREGAR ESTO 🔥🔥🔥
-            .requestMatchers("/api/v1/sales/**").permitAll()
-
-            // SWAGGER
+            // ENDPOINTS PÚBLICOS
             .requestMatchers(
-                "/v3/api-docs/**",
+                "/api/v1/auth/login",
+                "/api/v1/auth/register",
+                "/swagger-ui.html",
                 "/swagger-ui/**",
-                "/swagger-ui.html"
+                "/v3/api-docs",
+                "/v3/api-docs/**",
+                "/api/v1/transbank/**"
             ).permitAll()
 
-            // Todo lo demás requiere token
+            // TODO LO DEMÁS PROTEGIDO
             .anyRequest().authenticated()
         );
 
@@ -61,3 +44,4 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 }
 
 }
+

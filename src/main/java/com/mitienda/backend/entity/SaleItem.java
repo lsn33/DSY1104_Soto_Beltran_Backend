@@ -16,7 +16,12 @@ public class SaleItem {
     @JoinColumn(name = "sale_id")
     private Sale sale;
 
+    @Column(name = "product_id")
     private Long productId;
+
+
     private Integer cantidad;
+
+    @Column(name = "precio_unitario")
     private Double precioUnitario;
 }

@@ -15,12 +15,14 @@ public class Sale {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
-
-    private Double total;
-    private Double iva;
     private String estado; // aprobado o rechazado
     private LocalDateTime fecha;
+    private Double iva;
+    private Double total;
+    @Column(name = "user_id")
+    private Long userId;
+    
+    
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL)
     private List<SaleItem> items;

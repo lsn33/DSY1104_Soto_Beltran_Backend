@@ -26,34 +26,38 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http.csrf(csrf -> csrf.disable())
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+    http.csrf(csrf -> csrf.disable())
+        .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
 
-                        // LOGIN / REGISTER
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+            // LOGIN / REGISTER
+            .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        // TRANSBANK - MUY IMPORTANTE
-                        .requestMatchers("/api/v1/transbank/**").permitAll()
+            // TRANSBANK
+            .requestMatchers("/api/v1/transbank/**").permitAll()
 
-                        // SWAGGER
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+            // PRODUCTOS (públicos)
+            .requestMatchers("/api/v1/products/**").permitAll()
 
-                        // 🔥 PRODUCTOS - VISIBLES SIN TOKEN
-                        .requestMatchers("/api/v1/products/**").permitAll()
+            // 🔥🔥🔥 AGREGAR ESTO 🔥🔥🔥
+            .requestMatchers("/api/v1/sales/**").permitAll()
 
-                        // TODO LO DEMÁS → TOKEN OBLIGATORIO
-                        .anyRequest().authenticated()
-                );
+            // SWAGGER
+            .requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html"
+            ).permitAll()
 
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            // Todo lo demás requiere token
+            .anyRequest().authenticated()
+        );
 
-        return http.build();
-    }
+    http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+}
+
 }

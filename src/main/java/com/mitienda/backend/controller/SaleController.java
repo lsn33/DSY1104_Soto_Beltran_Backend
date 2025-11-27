@@ -3,6 +3,10 @@ package com.mitienda.backend.controller;
 import com.mitienda.backend.dto.SaleRequest;
 import com.mitienda.backend.entity.Sale;
 import com.mitienda.backend.service.SaleService;
+
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,7 +21,14 @@ public class SaleController {
     }
 
     @PostMapping
-    public Sale createSale(@RequestBody SaleRequest request) {
-        return service.createSale(request);
-    }
+public ResponseEntity<?> createSale(@RequestBody SaleRequest request) {
+    Sale sale = service.createSale(request);
+
+    return ResponseEntity.ok(Map.of(
+        "id", sale.getId(),
+        "total", sale.getTotal(),
+        "message", "Venta creada"
+    ));
+}
+
 }

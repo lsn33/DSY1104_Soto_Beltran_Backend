@@ -44,6 +44,7 @@ public class TransbankController {
         sale.setEstado(status.equalsIgnoreCase("APROBADO") ? "APROBADO" : "RECHAZADO");
         saleRepo.save(sale);
 
-        response.sendRedirect("http://localhost:5173/checkout/success?saleId=" + saleId);
+       response.sendRedirect("http://localhost:5173/#/checkout/success?saleId=" + saleId);
+
     }
 }

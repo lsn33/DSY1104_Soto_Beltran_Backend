@@ -15,39 +15,34 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-    http.csrf(csrf -> csrf.disable())
-        .cors(cors -> {})
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-                // 🔓 PÚBLICOS
-                .requestMatchers("/api/v1/auth/login").permitAll()
-                .requestMatchers("/api/v1/auth/register").permitAll()
+        http.csrf(csrf -> csrf.disable())
+            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+
+                // LOGIN / REGISTER
+                .requestMatchers("/api/v1/auth/**").permitAll()
+
+                // 🔥 TRANSBANK — DEBE SER PÚBLICO
                 .requestMatchers("/api/v1/transbank/**").permitAll()
 
-                // 🔓 PRODUCTOS — PÚBLICOS
-                .requestMatchers("/api/v1/products").permitAll()
-                .requestMatchers("/api/v1/products/**").permitAll()
+                // SWAGGER
+                .requestMatchers(
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**",
+                        "/v3/api-docs",
+                        "/api-docs/**",
+                        "/api-docs"
+                ).permitAll()
 
-                // 🔓 CATEGORÍAS — PÚBLICAS
-                .requestMatchers("/api/v1/categories").permitAll()
-                .requestMatchers("/api/v1/categories/**").permitAll()
-
-                // 🔒 ÓRDENES — SOLO ADMIN
-                .requestMatchers("/api/v1/sales").hasRole("ADMIN")
-                .requestMatchers("/api/v1/sales/**").hasRole("ADMIN")
-
-                // 🔒 TODO LO DEMÁS — REQUIERE TOKEN
+                // TODO lo demás exige JWT
                 .anyRequest().authenticated()
-        );
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-    http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
-    return http.build();
+        return http.build();
+    }
 }
-
-
-}
-

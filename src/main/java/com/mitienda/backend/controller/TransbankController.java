@@ -1,50 +1,41 @@
 package com.mitienda.backend.controller;
 
-import com.mitienda.backend.dto.TransbankInitRequest;
-import com.mitienda.backend.dto.TransbankInitResponse;
-import com.mitienda.backend.entity.Sale;
-import com.mitienda.backend.repository.SaleRepository;
-
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.mitienda.backend.transbank.WebpayService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/transbank")
 @CrossOrigin("*")
 public class TransbankController {
 
-    private final SaleRepository saleRepo;
+    private final WebpayService webpayService;
 
-    public TransbankController(SaleRepository saleRepo) {
-        this.saleRepo = saleRepo;
+    public TransbankController(WebpayService webpayService) {
+        this.webpayService = webpayService;
     }
 
     @PostMapping("/init")
-    public TransbankInitResponse iniciarPago(@RequestBody TransbankInitRequest req) {
+    public JsonNode init(@RequestBody Map<String, Object> req) throws Exception {
 
-        Sale sale = saleRepo.findById(req.getSaleId())
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+        String buyOrder = req.get("buyOrder").toString();
+        String sessionId = req.get("sessionId").toString();
+        double amount = Double.parseDouble(req.get("amount").toString());
 
-        String url = "http://localhost:8080/api/v1/transbank/return?token_ws=" + sale.getId();
+        String returnUrl = "http://localhost:5173/webpay/return";
 
-        return new TransbankInitResponse(url);
+        return webpayService.initTransaction(buyOrder, sessionId, amount, returnUrl);
     }
 
     @GetMapping("/return")
-    public void retornoTransbank(
-            @RequestParam("token_ws") Long saleId,
-            @RequestParam(defaultValue = "APROBADO") String status,
-            HttpServletResponse response) throws IOException {
+    public JsonNode finish(@RequestParam("token_ws") String token) throws Exception {
+        return webpayService.commitTransaction(token);
+    }
 
-        Sale sale = saleRepo.findById(saleId)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
-
-        sale.setEstado(status.equalsIgnoreCase("APROBADO") ? "APROBADO" : "RECHAZADO");
-        saleRepo.save(sale);
-
-       response.sendRedirect("http://localhost:5173/#/checkout/success?saleId=" + saleId);
-
+    @GetMapping("/status/{token}")
+    public JsonNode status(@PathVariable String token) throws Exception {
+        return webpayService.getStatus(token);
     }
 }

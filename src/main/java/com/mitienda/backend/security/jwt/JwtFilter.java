@@ -23,6 +23,24 @@ public class JwtFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
+    // ===============================================================
+    // 1) RUTAS QUE NO DEBEN SER FILTRADAS POR JWT (rutas públicas)
+    // ===============================================================
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+
+        String path = request.getRequestURI();
+
+        return path.matches("^/api/v1/auth(/.*)?$")
+                || path.matches("^/api/v1/products(/.*)?$")
+                || path.matches("^/api/v1/transbank(/.*)?$")
+                || path.matches("^/swagger-ui(/.*)?$")
+                || path.matches("^/v3/api-docs(/.*)?$");
+    }
+
+    // ===============================================================
+    // 2) FILTRADO JWT PARA RUTAS PROTEGIDAS
+    // ===============================================================
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -31,32 +49,35 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        // 🔥 Si NO hay token → dejar pasar (solo rutas protegidas llegarán aquí)
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            String token = authHeader.substring(7);
+        // 🔥 Hay token → procesarlo
+        String token = authHeader.substring(7);
 
-            if (jwtUtil.validateToken(token)) {
+        if (jwtUtil.validateToken(token)) {
 
-                String email = jwtUtil.getEmailFromToken(token);
-                String rol = jwtUtil.getRolFromToken(token);
+            String email = jwtUtil.getEmailFromToken(token);
+            String rol = jwtUtil.getRolFromToken(token);
 
-                // 🔥 IMPORTANTE: Spring requiere ROLE_XXXX
-                SimpleGrantedAuthority authority =
-                        new SimpleGrantedAuthority("ROLE_" + rol);
+            SimpleGrantedAuthority authority =
+                    new SimpleGrantedAuthority("ROLE_" + rol);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                email,
-                                null,
-                                Collections.singletonList(authority)
-                        );
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            email,
+                            null,
+                            Collections.singletonList(authority)
+                    );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);

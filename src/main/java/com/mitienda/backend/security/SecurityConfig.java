@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/products/**").permitAll()
                 .requestMatchers("/api/v1/transbank/**").permitAll()
+                .requestMatchers("/api/v1/sales/**").permitAll()
                 .anyRequest().authenticated()
             );
 

@@ -4,9 +4,6 @@ import com.mitienda.backend.dto.SaleRequest;
 import com.mitienda.backend.entity.Sale;
 import com.mitienda.backend.service.SaleService;
 
-import java.util.Map;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,28 +11,14 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin("*")
 public class SaleController {
 
-    private final SaleService service;
+    private final SaleService saleService;
 
-    public SaleController(SaleService service) {
-        this.service = service;
+    public SaleController(SaleService saleService) {
+        this.saleService = saleService;
     }
 
-    // 🔹 Crear venta
     @PostMapping
-    public ResponseEntity<?> createSale(@RequestBody SaleRequest request) {
-        Sale sale = service.createSale(request);
-
-        return ResponseEntity.ok(Map.of(
-                "id", sale.getId(),
-                "total", sale.getTotal(),
-                "estado", sale.getEstado(),
-                "fecha", sale.getFecha()
-        ));
-    }
-
-    // 🔹 Obtener TODAS las ventas (ADMIN)
-    @GetMapping
-    public ResponseEntity<?> getAllSales() {
-        return ResponseEntity.ok(service.getAllSales());
+    public Sale create(@RequestBody SaleRequest request) {
+        return saleService.createSale(request);
     }
 }

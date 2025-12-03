@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -15,15 +16,21 @@ public class Sale {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String estado; // aprobado o rechazado
-    private LocalDateTime fecha;
-    private Double iva;
-    private Double total;
-    @Column(name = "user_id")
     private Long userId;
-    
-    
+    private String buyOrder;
+    private String token;
+    private String authorizationCode;
+    private Double amount;
 
-    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL)
-    private List<SaleItem> items;
+    private String paymentTypeCode;
+    private Integer responseCode;
+    private String cardLast4;
+    private String status;
+
+    private LocalDateTime transactionDate;
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+   @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SaleItem> items = new ArrayList<>();
+
 }

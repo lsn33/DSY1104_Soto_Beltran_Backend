@@ -1,7 +1,5 @@
 package com.mitienda.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,16 +13,15 @@ public class SaleItem {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "sale_id")
-    @JsonIgnore   // 👈 EVITA CICLO INFINITO
+    @JoinColumn(name = "sale_id") // ← columna real en la BD
     private Sale sale;
 
-    @Column(name = "product_id")
+    @Column(name = "product_id") // ← columna real en la BD
     private Long productId;
 
+    private Integer quantity;
+    private Double subtotal;
 
-    private Integer cantidad;
-
-    @Column(name = "precio_unitario")
-    private Double precioUnitario;
+    @Column(name = "unit_price") // ← columna real en la BD
+    private Double unitPrice;
 }

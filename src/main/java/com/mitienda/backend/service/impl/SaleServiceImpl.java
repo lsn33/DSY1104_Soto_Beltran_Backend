@@ -8,76 +8,70 @@ import com.mitienda.backend.entity.SaleItem;
 import com.mitienda.backend.repository.ProductRepository;
 import com.mitienda.backend.repository.SaleRepository;
 import com.mitienda.backend.service.SaleService;
+
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class SaleServiceImpl implements SaleService {
 
-    private final SaleRepository saleRepo;
-    private final ProductRepository productRepo;
+    private final SaleRepository saleRepository;
+    private final ProductRepository productRepository;
 
-    public SaleServiceImpl(SaleRepository saleRepo, ProductRepository productRepo) {
-        this.saleRepo = saleRepo;
-        this.productRepo = productRepo;
+    public SaleServiceImpl(SaleRepository saleRepository, ProductRepository productRepository) {
+        this.saleRepository = saleRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
-    public Sale createSale(SaleRequest request) {
+    public Sale createSale(SaleRequest r) {
 
-        double total = 0.0;
-        List<SaleItem> saleItems = new ArrayList<>();
-
-        // 1) VALIDAR STOCK, CALCULAR TOTAL, DESCONTAR STOCK
-        for (SaleItemRequest itemReq : request.getItems()) {
-
-            Product product = productRepo.findById(itemReq.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-
-            if (product.getStock() < itemReq.getCantidad()) {
-                throw new RuntimeException("Stock insuficiente para: " + product.getNombre());
-            }
-
-            double subtotal = product.getPrecio() * itemReq.getCantidad();
-            total += subtotal;
-
-            product.setStock(product.getStock() - itemReq.getCantidad());
-            productRepo.save(product);
-
-            SaleItem saleItem = new SaleItem();
-            saleItem.setProductId(product.getId());
-            saleItem.setCantidad(itemReq.getCantidad());
-            saleItem.setPrecioUnitario(product.getPrecio());
-            saleItems.add(saleItem);
-        }
-
-        // 2) CALCULAR IVA
-        double iva = total * 0.19;
-
-        // 3) CREAR OBJETO SALE
+        // Crear venta
         Sale sale = new Sale();
-        sale.setUserId(request.getUserId());
-        sale.setItems(saleItems);
-        sale.setTotal(total);
-        sale.setIva(iva);
-        sale.setFecha(LocalDateTime.now());
-        sale.setEstado("APROBADO");
+        sale.setUserId(r.getUserId());
+        sale.setBuyOrder(r.getBuyOrder());
+        sale.setToken(r.getToken());
+        sale.setAuthorizationCode(r.getAuthorizationCode());
+        sale.setAmount(r.getAmount());
+        sale.setPaymentTypeCode(r.getPaymentTypeCode());
+        sale.setResponseCode(r.getResponseCode());
+        sale.setCardLast4(r.getCardLast4());
+        sale.setStatus(r.getStatus());
+        sale.setTransactionDate(r.getTransactionDate());
 
-        // 4) Relación bidireccional
-        for (SaleItem si : saleItems) {
+        // Lista de ítems
+        List<SaleItem> items = new ArrayList<>();
+
+        for (SaleItemRequest itemReq : r.getItems()) {
+
+            // Buscar producto real
+            Product product = productRepository.findById(itemReq.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + itemReq.getProductId()));
+
+            // Descontar stock
+            int nuevoStock = product.getStock() - itemReq.getQuantity();
+            if (nuevoStock < 0) nuevoStock = 0; // Evitar stock negativo
+
+            product.setStock(nuevoStock);
+            productRepository.save(product); // Guardar stock actualizado
+
+            // Crear item de venta
+            SaleItem si = new SaleItem();
             si.setSale(sale);
+            si.setProductId(itemReq.getProductId());
+            si.setQuantity(itemReq.getQuantity());
+            si.setUnitPrice(itemReq.getUnitPrice());
+            si.setSubtotal(itemReq.getQuantity() * itemReq.getUnitPrice());
+
+            items.add(si);
         }
 
-        // 5) Guardar en BD
-        return saleRepo.save(sale);
-    }
+        // Asignar ítems a la venta
+        sale.setItems(items);
 
-    // 🔥 NUEVO: obtener todas las ventas para el panel de ADMIN
-    @Override
-    public List<Sale> getAllSales() {
-        return saleRepo.findAll();
+        // Guardar venta + items
+        return saleRepository.save(sale);
     }
 }

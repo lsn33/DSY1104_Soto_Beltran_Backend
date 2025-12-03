@@ -2,9 +2,9 @@ package com.mitienda.backend.service.impl;
 
 import com.mitienda.backend.dto.SaleItemRequest;
 import com.mitienda.backend.dto.SaleRequest;
-import com.mitienda.backend.entity.Product;
 import com.mitienda.backend.entity.Sale;
 import com.mitienda.backend.entity.SaleItem;
+import com.mitienda.backend.entity.Product;
 import com.mitienda.backend.repository.ProductRepository;
 import com.mitienda.backend.repository.SaleRepository;
 import com.mitienda.backend.service.SaleService;
@@ -28,50 +28,44 @@ public class SaleServiceImpl implements SaleService {
     @Override
     public Sale createSale(SaleRequest r) {
 
-        // Crear venta
+        // Venta en estado pendiente
         Sale sale = new Sale();
         sale.setUserId(r.getUserId());
-        sale.setBuyOrder(r.getBuyOrder());
-        sale.setToken(r.getToken());
-        sale.setAuthorizationCode(r.getAuthorizationCode());
-        sale.setAmount(r.getAmount());
-        sale.setPaymentTypeCode(r.getPaymentTypeCode());
-        sale.setResponseCode(r.getResponseCode());
-        sale.setCardLast4(r.getCardLast4());
-        sale.setStatus(r.getStatus());
-        sale.setTransactionDate(r.getTransactionDate());
+        sale.setStatus("PENDING");
 
-        // Lista de ítems
         List<SaleItem> items = new ArrayList<>();
+        double totalAmount = 0;  // 🔥 calcular monto total
 
         for (SaleItemRequest itemReq : r.getItems()) {
 
             // Buscar producto real
             Product product = productRepository.findById(itemReq.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + itemReq.getProductId()));
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
-            // Descontar stock
+            // 🔥 RESTAR STOCK
             int nuevoStock = product.getStock() - itemReq.getQuantity();
-            if (nuevoStock < 0) nuevoStock = 0; // Evitar stock negativo
+            product.setStock(Math.max(nuevoStock, 0)); // evita negativos
+            productRepository.save(product);
 
-            product.setStock(nuevoStock);
-            productRepository.save(product); // Guardar stock actualizado
-
-            // Crear item de venta
+            // Crear item de la venta
             SaleItem si = new SaleItem();
             si.setSale(sale);
             si.setProductId(itemReq.getProductId());
             si.setQuantity(itemReq.getQuantity());
             si.setUnitPrice(itemReq.getUnitPrice());
-            si.setSubtotal(itemReq.getQuantity() * itemReq.getUnitPrice());
+
+            double subtotal = itemReq.getQuantity() * itemReq.getUnitPrice();
+            si.setSubtotal(subtotal);
+
+            totalAmount += subtotal; // acumular total
 
             items.add(si);
         }
 
-        // Asignar ítems a la venta
         sale.setItems(items);
+        sale.setAmount(totalAmount); // 🔥 guardar monto total en tabla sales
 
-        // Guardar venta + items
         return saleRepository.save(sale);
     }
+
 }

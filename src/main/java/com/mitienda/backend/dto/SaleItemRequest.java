@@ -6,5 +6,5 @@ import lombok.Data;
 public class SaleItemRequest {
     private Long productId;
     private Integer quantity;
-    private Double unitPrice;
+    private Double unitPrice; // OK, lo tomamos del frontend
 }

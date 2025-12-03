@@ -37,11 +37,23 @@ public class SecurityConfig {
             .cors(cors -> {})
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // <--- ESTA ES LA CLAVE
+
+                // 🔥 CORS preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // 🔥 LOGIN / REGISTER
                 .requestMatchers("/api/v1/auth/**").permitAll()
+
+                // 🔥 PRODUCTOS
                 .requestMatchers("/api/v1/products/**").permitAll()
+
+                // 🔥 TRANSBANK
                 .requestMatchers("/api/v1/transbank/**").permitAll()
+
+                // 🔥 SALES → NECESARIO PARA OrderSuccess
                 .requestMatchers("/api/v1/sales/**").permitAll()
+
+                // Cualquier otra ruta → requiere JWT
                 .anyRequest().authenticated()
             );
 

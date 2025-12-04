@@ -38,34 +38,35 @@ public class SecurityConfig {
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
 
-                // 🔥 CORS preflight
+                // CORS preflight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // 🔥 LOGIN / REGISTER
+                // AUTH
                 .requestMatchers("/api/v1/auth/**").permitAll()
 
-                // 🔥 PRODUCTOS
-                .requestMatchers("/api/v1/products/**").permitAll()
+                // SWAGGER
+                .requestMatchers(
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs",
+                    "/v3/api-docs/**",
+                    "/api-docs/**"
+                ).permitAll()
 
-                // 🔥 TRANSBANK
+                // PRODUCTOS (solo admin para POST, PUT, DELETE)
+                .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
+
+                // TRANSBANK
                 .requestMatchers("/api/v1/transbank/**").permitAll()
 
-                // 🔥 SALES → NECESARIO PARA OrderSuccess
-                .requestMatchers("/api/v1/sales/**").permitAll()
-
-                // 🔥 SWAGGER → NECESARIO PARA DOCUMENTACIÓN
-                .requestMatchers(
-                "/swagger-ui.html",
-                            "/swagger-ui/**",
-                            "/v3/api-docs",
-                            "/v3/api-docs/**",
-                            "/api-docs/**"
-                ).permitAll()
+                // SALES (mostrar orden exitosa)
+                .requestMatchers("/api/v1/sales/**").authenticated()
 
                 // Cualquier otra ruta → requiere JWT
                 .anyRequest().authenticated()
-
-                 
             );
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

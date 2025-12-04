@@ -53,8 +53,19 @@ public class SecurityConfig {
                 // 🔥 SALES → NECESARIO PARA OrderSuccess
                 .requestMatchers("/api/v1/sales/**").permitAll()
 
+                // 🔥 SWAGGER → NECESARIO PARA DOCUMENTACIÓN
+                .requestMatchers(
+                "/swagger-ui.html",
+                            "/swagger-ui/**",
+                            "/v3/api-docs",
+                            "/v3/api-docs/**",
+                            "/api-docs/**"
+                ).permitAll()
+
                 // Cualquier otra ruta → requiere JWT
                 .anyRequest().authenticated()
+
+                 
             );
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

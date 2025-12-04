@@ -2,12 +2,13 @@ package com.mitienda.backend.controller;
 
 import com.mitienda.backend.dto.SaleRequest;
 import com.mitienda.backend.entity.Sale;
+import com.mitienda.backend.repository.SaleRepository;
 import com.mitienda.backend.service.SaleService;
+
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/sales")
@@ -15,35 +16,23 @@ import java.util.Map;
 public class SaleController {
 
     private final SaleService saleService;
+    private final SaleRepository saleRepository;
 
-    public SaleController(SaleService saleService) {
+    public SaleController(SaleService saleService, SaleRepository saleRepository) {
         this.saleService = saleService;
+        this.saleRepository = saleRepository;
     }
 
-    // =========================================================
-    // 🔥 CREAR VENTA PENDING (ANTES DE TRANSBANK)
-    // =========================================================
     @PostMapping
     public ResponseEntity<?> create(@RequestBody SaleRequest request) {
-
-        // Validación básica
-        if (request.getUserId() == null || request.getItems() == null || request.getItems().isEmpty()) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("error", "Datos inválidos: userId y items son obligatorios")
-            );
-        }
-
-        // Crear venta y descontar stock
         Sale sale = saleService.createSale(request);
+        return ResponseEntity.ok(Map.of("saleId", sale.getId()));
+    }
 
-        // Respuesta limpia
-        return ResponseEntity.ok(
-                Map.of(
-                        "saleId", sale.getId(),
-                        "status", "PENDING",
-                        "message", "Venta creada correctamente"
-                )
-        );
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        return saleRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }
-// ll

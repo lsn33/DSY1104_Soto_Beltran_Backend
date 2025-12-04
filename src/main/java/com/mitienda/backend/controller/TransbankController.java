@@ -1,6 +1,7 @@
 package com.mitienda.backend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.mitienda.backend.dto.SaleIdRequest;
 import com.mitienda.backend.entity.Sale;
 import com.mitienda.backend.repository.SaleRepository;
 import com.mitienda.backend.transbank.WebpayService;
@@ -27,26 +28,27 @@ public class TransbankController {
     // 🔥 1) INICIAR TRANSACCIÓN WEBPAY
     // =========================================================
     @PostMapping("/init")
-    public JsonNode init(@RequestBody Map<String, Object> req) throws Exception {
+public JsonNode init(@RequestBody SaleIdRequest req) throws Exception {
 
-        Long saleId = Long.valueOf(req.get("saleId").toString());
+    Long saleId = req.getSaleId();
 
-        Sale sale = saleRepository.findById(saleId)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+    Sale sale = saleRepository.findById(saleId)
+            .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
 
-        // Calcular monto total (Webpay NO permite decimales)
-        double amount = sale.getItems().stream()
-                .mapToDouble(i -> i.getSubtotal())
-                .sum();
+    double amount = sale.getItems().stream()
+            .mapToDouble(i -> i.getSubtotal())
+            .sum();
 
-        amount = Math.round(amount);
+    amount = Math.round(amount);
 
-        String buyOrder = saleId.toString();
-        String sessionId = sale.getUserId().toString();
-        String returnUrl = "http://localhost:5173/webpay/return";
+    String buyOrder = saleId.toString();
+    String sessionId = sale.getUserId().toString();
 
-        return webpayService.initTransaction(buyOrder, sessionId, amount, returnUrl);
-    }
+    String returnUrl = "http://localhost:5173/webpay/return";
+
+    return webpayService.initTransaction(buyOrder, sessionId, amount, returnUrl);
+}
+
 
 
     // =========================================================

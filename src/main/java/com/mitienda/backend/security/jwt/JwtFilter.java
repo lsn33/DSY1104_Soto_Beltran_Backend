@@ -23,17 +23,24 @@ public class JwtFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
+    // ===============================================================
+    // 1) RUTAS QUE NO DEBEN SER FILTRADAS POR JWT (rutas públicas)
+    // ===============================================================
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
 
         String path = request.getRequestURI();
 
         return path.matches("^/api/v1/auth(/.*)?$")
+                || path.matches("^/api/v1/products(/.*)?$")
                 || path.matches("^/api/v1/transbank(/.*)?$")
                 || path.matches("^/swagger-ui(/.*)?$")
                 || path.matches("^/v3/api-docs(/.*)?$");
     }
 
+    // ===============================================================
+    // 2) FILTRADO JWT PARA RUTAS PROTEGIDAS
+    // ===============================================================
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -42,20 +49,22 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
+        // 🔥 Si NO hay token → dejar pasar (solo rutas protegidas llegarán aquí)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        // 🔥 Hay token → procesarlo
         String token = authHeader.substring(7);
 
         if (jwtUtil.validateToken(token)) {
 
             String email = jwtUtil.getEmailFromToken(token);
-            String rol = jwtUtil.getRolFromToken(token);  // ahora viene ROLE_ADMIN
+            String rol = jwtUtil.getRolFromToken(token);
 
             SimpleGrantedAuthority authority =
-                    new SimpleGrantedAuthority(rol);  // YA NO agregamos ROLE_ aquí
+                    new SimpleGrantedAuthority("ROLE_" + rol);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(

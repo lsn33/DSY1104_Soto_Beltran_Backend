@@ -29,6 +29,8 @@ public class AuthController {
         user.setEmail(req.getEmail());
         user.setPassword(encoder.encode(req.getPassword()));
         user.setRol("USER");
+        user.setTelefono(req.getTelefono());
+        user.setDireccion(req.getDireccion());
 
         userRepo.save(user);
 
